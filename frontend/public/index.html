@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0a0f1f">
+  <title>RPS Mind · Rock Paper Scissors vs a bot that learns you</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%8A%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="bg" aria-hidden="true">
+    <span class="blob b1"></span><span class="blob b2"></span><span class="blob b3"></span>
+  </div>
+
+  <main class="app">
+    <!-- ================= header ================= -->
+    <header class="top">
+      <div class="brand">
+        <div class="logo" aria-hidden="true">✊</div>
+        <div>
+          <h1>RPS Mind</h1>
+          <p id="tagline" class="tagline">Waking up the bot…</p>
+        </div>
+      </div>
+
+      <ul class="lights" aria-label="Status of the three services">
+        <li id="light-frontend" class="light ok" title="You are looking at it"><i></i>frontend</li>
+        <li id="light-backend" class="light unknown" title="checking…"><i></i>backend</li>
+        <li id="light-db" class="light unknown" title="checking…"><i></i>database</li>
+      </ul>
+    </header>
+
+    <div class="grid">
+      <!-- ================= arena ================= -->
+      <section class="card arena" aria-label="Game arena">
+        <div id="confetti" class="confetti-layer" aria-hidden="true"></div>
+
+        <div class="score">
+          <div class="score-box you"><span id="s-wins" class="num">0</span><span class="lbl">You</span></div>
+          <div class="score-box draw"><span id="s-draws" class="num">0</span><span class="lbl">Draws</span></div>
+          <div class="score-box bot"><span id="s-losses" class="num">0</span><span class="lbl">Bot</span></div>
+        </div>
+
+        <div class="stage">
+          <div id="side-you" class="side you">
+            <div class="hand"><span id="hand-you" class="e">✊</span></div>
+            <div class="who">You</div>
+          </div>
+          <div class="vs">VS</div>
+          <div id="side-bot" class="side bot">
+            <div class="hand"><span id="hand-bot" class="e">✊</span></div>
+            <div class="who">Bot</div>
+          </div>
+        </div>
+
+        <div id="banner" class="banner idle" role="status" aria-live="polite">Pick your move</div>
+        <p id="thought" class="thought">&nbsp;</p>
+
+        <div class="moves" role="group" aria-label="Choose your move">
+          <button class="move" data-move="rock" aria-label="Rock"><span class="emoji">✊</span><span class="name">Rock</span><kbd>R</kbd></button>
+          <button class="move" data-move="paper" aria-label="Paper"><span class="emoji">✋</span><span class="name">Paper</span><kbd>P</kbd></button>
+          <button class="move" data-move="scissors" aria-label="Scissors"><span class="emoji">✌️</span><span class="name">Scissors</span><kbd>S</kbd></button>
+        </div>
+
+        <div class="history-wrap">
+          <span class="history-label">Last rounds</span>
+          <div id="history" class="history" aria-label="Your last rounds"></div>
+        </div>
+      </section>
+
+      <!-- ================= the bot's brain ================= -->
+      <aside class="card brain" aria-label="What the bot has learned">
+        <h2>🧠 What the bot has learned</h2>
+
+        <div class="panel">
+          <h3>Your moves</h3>
+          <div id="bars" class="bars">
+            <div class="bar" data-move="rock"><span class="b-ico">✊</span><div class="track"><div class="fill"></div></div><span class="pct">0%</span></div>
+            <div class="bar" data-move="paper"><span class="b-ico">✋</span><div class="track"><div class="fill"></div></div><span class="pct">0%</span></div>
+            <div class="bar" data-move="scissors"><span class="b-ico">✌️</span><div class="track"><div class="fill"></div></div><span class="pct">0%</span></div>
+          </div>
+          <p id="fav" class="hint">Play a few rounds and I will start to read you.</p>
+        </div>
+
+        <div class="panel duo">
+          <div class="duo-item">
+            <div id="ring" class="ring" style="--p:0"><span id="ring-pct">–</span></div>
+            <p class="cap"><b>Bot guessed</b><br>your move</p>
+          </div>
+          <div class="duo-item">
+            <div class="bigstat"><span id="winrate">–</span></div>
+            <p class="cap"><b>Your win rate</b><br>random play = 33%</p>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h3>Your win rate over time <small>rolling, last 10 rounds</small></h3>
+          <svg id="spark" class="spark" viewBox="0 0 300 96" role="img" aria-label="Win rate over time"></svg>
+          <p id="spark-hint" class="hint">Needs a few rounds to draw.</p>
+        </div>
+
+        <button id="wipe" class="ghost" type="button">🧽 Wipe the bot's memory</button>
+      </aside>
+    </div>
+
+    <footer class="foot">
+      <span>Backend container: <b id="host">…</b></span>
+      <span class="dot">·</span>
+      <span>Database: <b id="dbver">…</b></span>
+      <span class="dot">·</span>
+      <span>Your rounds live in the <code>db-data</code> volume. Try <code>docker compose down</code> vs <code>down -v</code>.</span>
+    </footer>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,85 @@
+# ============================================================================
+#  Rock-Paper-Scissors against a bot that learns you
+#
+#  Start order (enforced by depends_on + healthchecks):
+#
+#      db  -->  backend  -->  frontend
+#
+#  Run it:    docker compose up -d --build
+#  Open it:   http://localhost:8080
+#  Stop it:   docker compose down        (your data is kept)
+#  Reset all: docker compose down -v     (deletes the database volume!)
+# ============================================================================
+name: rps-bot
+
+services:
+
+  # ---------------------------------------------------------------- 1. DATABASE
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-rps}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-devpass}
+      POSTGRES_DB: ${POSTGRES_DB:-rps}
+    volumes:
+      - db-data:/var/lib/postgresql/data                       # the data survives "down"
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro  # creates the table on first start
+    healthcheck:
+      # "-h 127.0.0.1" makes the check use TCP. During its first start Postgres
+      # runs a temporary server that only listens on a socket, and without -h
+      # the check would say "ready" too early.
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+      start_period: 5s
+    networks:
+      - backend-net
+
+  # ----------------------------------------------------------------- 2. BACKEND
+  backend:
+    build: ./backend            # built from backend/Dockerfile
+    restart: unless-stopped
+    environment:
+      DB_HOST: db               # the SERVICE NAME works as a hostname
+      DB_USER: ${POSTGRES_USER:-rps}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-devpass}
+      DB_NAME: ${POSTGRES_DB:-rps}
+    depends_on:
+      db:
+        condition: service_healthy     # wait until the database is READY, not just started
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3000/api/health || exit 1"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+    networks:
+      - frontend-net
+      - backend-net             # the only service that sees BOTH networks
+
+  # ---------------------------------------------------------------- 3. FRONTEND
+  frontend:
+    build: ./frontend           # nginx + the web page
+    restart: unless-stopped
+    ports:
+      - "${WEB_PORT:-8080}:80"  # the ONLY port opened to your computer
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/ > /dev/null || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - frontend-net
+
+# Two networks = a wall: the frontend cannot reach the database directly.
+networks:
+  frontend-net:
+  backend-net:
+
+volumes:
+  db-data:
